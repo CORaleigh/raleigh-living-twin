@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+    <title>Raleigh Living Twin</title>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+
+    <nav class="selector" id="selector" aria-label="District selector"></nav>
+
+    <header class="masthead">
+      <div class="eyebrow">
+        <span>Raleigh · Digital Twin</span>
+        <span class="live"><span class="pip"></span><span id="srcbadge" title="">DEMO</span></span>
+      </div>
+      <h1>The city's biggest active builds, <span class="accent">chapter by chapter</span></h1>
+      <p class="dek">Start with the whole city, then drop into a district to see its largest active building permits rise as beacons.</p>
+      <div class="readout">
+        <span>VIEW <b id="vlabel">City</b></span>
+        <span>HEADING <b id="hdg">000°</b></span>
+      </div>
+    </header>
+
+    <aside class="hero" id="hero" aria-live="polite"></aside>
+
+    <div class="rail">
+      <button class="btn" id="playbtn" aria-label="Pause rotation">
+        <span id="playlabel">Pause orbit</span>
+      </button>
+    </div>
+
+    <div class="dock">
+      <div class="kpis">
+        <div class="card">
+          <div class="clab">Active permits · citywide</div>
+          <div class="cval" id="k1">—</div>
+          <div class="cfoot">in review · fees · accepted</div>
+        </div>
+        <div class="card">
+          <div class="clab">Active valuation</div>
+          <div class="cval" id="k2">—</div>
+          <div class="cfoot">sum of estimated project cost</div>
+        </div>
+        <div class="card">
+          <div class="clab">Focus districts</div>
+          <div class="cval" id="k3">5</div>
+          <div class="cfoot">click one above to enter</div>
+        </div>
+      </div>
+
+      <aside class="spotlight" id="spot">
+        <div class="sp-head">
+          <span class="sp-tag" id="sptag">◈ City overview</span>
+          <div class="sp-nav">
+            <button id="prev" aria-label="Previous">‹</button>
+            <button id="next" aria-label="Next">›</button>
+          </div>
+        </div>
+        <div class="sp-body" id="spbody"></div>
+      </aside>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
