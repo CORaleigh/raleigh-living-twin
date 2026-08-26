@@ -29,10 +29,6 @@ npm install
 npm run dev        # opens http://localhost:5173
 ```
 
-> This machine uses a portable Node in the user profile. If `node`/`npm` aren't on
-> your PATH, prefix the session with:
-> `$env:Path = "C:\Users\alberquej\nodejs\node-v24.16.0-win-x64;" + $env:Path`
-
 Optional: copy `.env.example` to `.env` and add a free
 [ArcGIS API key](https://developers.arcgis.com) as `VITE_ARCGIS_API_KEY` to
 upgrade the basemap/ground to Esri's hosted dark 3D basemap. Without a key the app
