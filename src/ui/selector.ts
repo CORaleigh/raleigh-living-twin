@@ -10,17 +10,13 @@ import type { DistrictData, ViewMode } from "../types";
 export function buildSelector(el: HTMLElement): void {
   el.innerHTML = "";
 
-  const city = document.createElement("button");
-  city.className = "seg city";
-  city.dataset.mode = "city";
-  city.textContent = "◍ City";
-  el.appendChild(city);
-
   DISTRICTS.forEach((d, i) => {
     const b = document.createElement("button");
     b.className = "seg";
     b.dataset.mode = String(i);
-    b.innerHTML = `${d.name} <span class="tot" data-tot="${d.id}">—</span>`;
+    b.innerHTML =
+      `<span class="seg-name">${d.name}</span>` +
+      `<span class="seg-tot" data-tot="${d.id}">—</span>`;
     el.appendChild(b);
   });
 

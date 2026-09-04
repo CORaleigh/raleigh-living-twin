@@ -14,6 +14,9 @@
   <body>
     <div id="viewDiv"></div>
 
+    <!-- Cinematic edge-darkening over the 3D scene (below the panels) -->
+    <div class="vignette"></div>
+
     <nav class="selector" id="selector" aria-label="District selector"></nav>
 
     <header class="masthead">
@@ -28,8 +31,6 @@
         <span>HEADING <b id="hdg">000°</b></span>
       </div>
     </header>
-
-    <aside class="hero" id="hero" aria-live="polite"></aside>
 
     <div class="rail">
       <button class="btn" id="playbtn" aria-label="Pause rotation">
@@ -60,8 +61,8 @@
         <div class="sp-head">
           <span class="sp-tag" id="sptag">◈ City overview</span>
           <div class="sp-nav">
-            <button id="prev" aria-label="Previous">‹</button>
-            <button id="next" aria-label="Next">›</button>
+            <button id="prev" aria-label="Previous project">‹</button>
+            <button id="next" aria-label="Next project">›</button>
           </div>
         </div>
         <div class="sp-body" id="spbody"></div>

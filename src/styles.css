@@ -24,10 +24,19 @@ body {
 }
 #viewDiv { position: fixed; inset: 0; }
 
+/* cinematic vignette — darkens the frame edges over the 3D scene */
+.vignette {
+  position: fixed; inset: 0; pointer-events: none; z-index: 20;
+  background: radial-gradient(120% 90% at 50% 44%, transparent 46%, rgba(4, 7, 14, 0.55) 100%);
+}
+
 /* Esri widget chrome tuned to the dark palette */
 .esri-view .esri-attribution { background: rgba(7, 11, 22, 0.6); color: var(--ink-dim); }
 
-.masthead { position: fixed; top: 34px; left: 40px; max-width: min(40vw, 440px); z-index: 40; pointer-events: none; background: var(--panel); border: 1px solid var(--stroke); border-radius: var(--r); padding: 16px 18px; backdrop-filter: blur(10px); box-shadow: var(--shadow); }
+.masthead { position: fixed; top: 34px; left: 40px; max-width: min(40vw, 440px); z-index: 40; pointer-events: none; background: var(--panel); border: 1px solid var(--stroke); border-radius: var(--r); padding: 16px 18px; backdrop-filter: blur(10px); box-shadow: var(--shadow); overflow: hidden; }
+/* large faint "DEMO" watermark washed across the title panel */
+.masthead::after { content: "DEMO"; position: absolute; right: -8px; bottom: -20px; z-index: 0; font-family: "Chakra Petch", sans-serif; font-weight: 700; font-size: 92px; line-height: 1; letter-spacing: 0.06em; color: rgba(255, 177, 74, 0.07); transform: rotate(-13deg); pointer-events: none; user-select: none; }
+.masthead > * { position: relative; z-index: 1; } /* keep the real content above the watermark */
 .eyebrow { display: flex; align-items: center; gap: 9px; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--cyan-soft); }
 .live { display: inline-flex; align-items: center; gap: 6px; color: var(--amber-hi); }
 .live .pip { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); animation: pip 1.9s ease-out infinite; }
@@ -38,12 +47,17 @@ h1 .accent { color: var(--amber-hi); }
 .readout { margin-top: 13px; display: flex; gap: 16px; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-dim); }
 .readout b { color: var(--cyan-soft); font-weight: 500; }
 
-.selector { position: fixed; top: 28px; left: 50%; transform: translateX(-50%); z-index: 46; display: flex; gap: 6px; background: var(--panel); padding: 6px; border-radius: 13px; border: 1px solid var(--stroke); backdrop-filter: blur(10px); box-shadow: var(--shadow); max-width: min(64vw, 720px); overflow-x: auto; }
-.seg { white-space: nowrap; font: inherit; font-size: 12.5px; color: var(--ink-mut); cursor: pointer; background: transparent; border: 1px solid transparent; border-radius: 9px; padding: 7px 13px; display: flex; align-items: center; gap: 7px; transition: color 0.15s, background 0.15s; }
-.seg:hover { color: #fff; }
-.seg .tot { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--ink-dim); }
-.seg.active { color: #0b1020; background: var(--amber-hi); border-color: var(--amber-hi); font-weight: 600; }
-.seg.active .tot { color: rgba(11, 16, 32, 0.7); }
+/* district "chapter" selector — a centered top tab bar (name over live total) */
+.selector { position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 46; display: flex; gap: 2px; background: var(--panel); padding: 5px; border-radius: 15px; border: 1px solid var(--stroke); backdrop-filter: blur(10px); box-shadow: var(--shadow); max-width: min(74vw, 780px); overflow-x: auto; scrollbar-width: none; }
+.selector::-webkit-scrollbar { display: none; }
+.seg { position: relative; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; font: inherit; color: var(--ink-mut); cursor: pointer; background: transparent; border: 0; border-radius: 10px; padding: 8px 16px 10px; transition: color 0.15s, background 0.15s; }
+.seg .seg-name { font-family: "Chakra Petch", sans-serif; font-weight: 600; font-size: 13px; line-height: 1; }
+.seg .seg-tot { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.02em; color: var(--ink-dim); line-height: 1; }
+.seg::after { content: ""; position: absolute; left: 15px; right: 15px; bottom: 3px; height: 2px; border-radius: 2px; background: transparent; transition: background 0.18s; }
+.seg:hover { color: #fff; background: rgba(127, 231, 235, 0.06); }
+.seg.active { color: var(--amber-hi); background: rgba(255, 177, 74, 0.10); }
+.seg.active .seg-tot { color: var(--amber); }
+.seg.active::after { background: var(--amber); }
 .seg:focus-visible { outline: 2px solid var(--cyan-soft); outline-offset: 2px; }
 
 /* hero narrative panel (shown when a beacon is clicked) */
@@ -84,6 +98,7 @@ h1 .accent { color: var(--amber-hi); }
 .card .cval .u { font-size: 13px; color: var(--ink-mut); font-weight: 500; }
 .card .cfoot { margin-top: 5px; font-size: 11px; color: var(--ink-mut); }
 
+/* bottom-right project panel (filled by spotlight.ts) */
 .spotlight { width: min(33vw, 380px); background: linear-gradient(180deg, rgba(18, 26, 46, 0.9), rgba(11, 17, 33, 0.9)); border: 1px solid var(--stroke-strong); border-radius: var(--r); padding: 15px 17px; backdrop-filter: blur(10px); box-shadow: var(--shadow); position: relative; overflow: hidden; pointer-events: auto; }
 .spotlight::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--amber); }
 .sp-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
@@ -95,7 +110,9 @@ h1 .accent { color: var(--amber-hi); }
 .sp-rank { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-dim); }
 .sp-name { font-family: "Chakra Petch", sans-serif; font-weight: 700; font-size: 18px; line-height: 1.1; margin: 3px 0 2px; text-wrap: balance; }
 .sp-meta { font-size: 12px; color: var(--ink-mut); margin-bottom: 10px; }
-.sp-stats { display: flex; gap: 18px; }
+.sp-chips { display: flex; gap: 7px; margin-bottom: 11px; flex-wrap: wrap; }
+.sp-nar { font-size: 12.5px; line-height: 1.5; color: var(--ink-mut); margin-bottom: 12px; }
+.sp-stats { display: flex; gap: 18px; flex-wrap: wrap; }
 .sp-stat .k { font-family: "IBM Plex Mono", monospace; font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
 .sp-stat .v { font-family: "Chakra Petch", sans-serif; font-weight: 600; font-size: 15px; margin-top: 3px; }
 .sp-stat .v.amber { color: var(--amber-hi); }
@@ -103,12 +120,19 @@ h1 .accent { color: var(--amber-hi); }
 .sp-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
 
 @media (max-width: 900px) {
-  .masthead { max-width: 56vw; top: 74px; left: 20px; }
-  .selector { top: 16px; max-width: 92vw; }
-  .rail { top: 16px; right: 16px; }
-  .readout { display: none; }
-  .dock { flex-direction: column; align-items: stretch; padding: 0 14px 14px; }
-  .spotlight { width: auto; }
-  .hero { display: none; } /* the spotlight card carries the same info on narrow screens */
+  /* Trim the chrome so the 3D scene keeps the screen instead of being buried. */
+  .masthead { max-width: min(64vw, 320px); top: 58px; left: 14px; padding: 12px 14px; }
+  h1 { font-size: 18px; margin: 8px 0 0; }
+  .dek, .readout { display: none; }
+  .selector { top: 12px; max-width: 94vw; padding: 4px; }
+  .seg { padding: 8px 13px; }
+  .seg .seg-tot { display: none; } /* name-only on narrow screens */
+  .seg::after { left: 11px; right: 11px; bottom: 2px; }
+  .rail { top: 12px; right: 14px; }
+  .btn { padding: 7px 11px; font-size: 12px; }
+  .dock { flex-direction: column; align-items: stretch; padding: 0 12px 12px; }
+  .card { min-width: 128px; padding: 11px 13px; }
+  .card .cval { font-size: 20px; }
+  .spotlight { width: auto; padding: 13px 15px; }
 }
 @media (prefers-reduced-motion: reduce) { .live .pip { animation: none; } }

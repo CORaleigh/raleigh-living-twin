@@ -7,7 +7,6 @@ import { DISTRICTS, CITY_CAMERA } from "./config/districts";
 import { queryTopPermits, queryDistrictStats, queryCityStats } from "./services/permits";
 import { buildSelector, setSelectorTotals } from "./ui/selector";
 import { renderSpotlight } from "./ui/spotlight";
-import { renderHero } from "./ui/hero";
 import { updateKpis } from "./ui/kpis";
 import { state } from "./state";
 import type { DistrictData } from "./types";
@@ -19,27 +18,16 @@ const { view, beaconLayer } = createTwin("viewDiv", Boolean(apiKey));
 const orbit = new Orbit(view);
 const selectorEl = document.getElementById("selector")!;
 const spotEl = document.getElementById("spot")!;
-const heroEl = document.getElementById("hero")!;
-
-// Hero narrative panel follows the current selection.
-state.subscribe((s) => {
-  const districtName = s.view === "city" ? "" : DISTRICTS[s.view].name;
-  renderHero(heroEl, s.selected, districtName, () => state.select(null));
-});
-
-// Working copy of the districts with permits/totals filled in as we learn them.
-const districts: DistrictData[] = DISTRICTS.map((d) => ({ ...d, permits: [], total: 0, count: 0 }));
-let lastView: string = "";
-let ready = false; // becomes true once the SceneView is usable (guards applyView)
 
 function idIndex(id: string): number {
   return DISTRICTS.findIndex((d) => d.id === id);
 }
 
-function spotlightNow(): void {
-  const s = state.get();
-  renderSpotlight(spotEl, { view: s.view, districts, selected: s.selected });
-}
+// Working copy of the districts with permits/totals filled in as we learn them.
+const districts: DistrictData[] = DISTRICTS.map((d) => ({ ...d, permits: [], total: 0, count: 0 }));
+let lastView: string = "";
+let lastSelected: number | null = null; // objectId of the last focused permit
+let ready = false; // becomes true once the SceneView is usable (guards applyView)
 
 async function ensurePermits(i: number): Promise<void> {
   const d = districts[i];
@@ -60,8 +48,9 @@ async function applyView(): Promise<void> {
   if (!ready) return;
   const s = state.get();
   const key = String(s.view);
+  const viewChanged = lastView !== key;
 
-  if (lastView !== key) {
+  if (viewChanged) {
     if (s.view === "city") {
       renderDistrictBeacons(beaconLayer, districts);
       orbit.setSpeed(3);
@@ -79,7 +68,30 @@ async function applyView(): Promise<void> {
     lastView = key;
     if (playing) orbit.start(); // resume orbiting the new pivot
   }
-  spotlightNow();
+
+  // Selecting a permit re-pivots the orbit onto that project and closes in;
+  // deselecting pulls back out to the district framing. Skipped right after a
+  // view change (that flight already framed things).
+  const selId = s.selected?.objectId ?? null;
+  if (!viewChanged && selId !== lastSelected && s.view !== "city") {
+    const i = s.view;
+    const c = DISTRICTS[i].camera;
+    if (s.selected) {
+      const pivot: [number, number] = [s.selected.lon, s.selected.lat];
+      orbit.setSpeed(5);
+      orbit.setCenter(pivot);
+      await flyTo({ center: pivot, zoom: c.zoom + 1, tilt: c.tilt });
+    } else {
+      orbit.setSpeed(6);
+      orbit.setCenter(DISTRICTS[i].center);
+      await flyTo({ center: DISTRICTS[i].center, zoom: c.zoom, tilt: c.tilt });
+    }
+    if (playing) orbit.start(); // resume orbiting the new pivot
+  }
+  lastSelected = selId;
+
+  // Bottom-right project panel reflects the current view / selection.
+  renderSpotlight(spotEl, { view: s.view, districts, selected: s.selected });
 }
 
 // Re-render whenever view or selection changes.
@@ -90,13 +102,9 @@ view.on("click", async (event) => {
   const hit = await view.hitTest(event, { include: [beaconLayer] });
   const g = hit.results.find((r) => "graphic" in r) as __esri.GraphicHit | undefined;
   const attr = g?.graphic?.attributes;
-  if (!attr) {
-    // click empty space: step back out (permit → district → city)
-    const s = state.get();
-    if (s.selected) state.select(null);
-    else if (s.view !== "city") state.setView("city");
-    return;
-  }
+  // Clicking anywhere that isn't a beacon does nothing — no zoom-out, no
+  // deselect. Navigation is driven by the selector and the ‹ › buttons.
+  if (!attr) return;
   if (attr.kind === "district") {
     const i = idIndex(attr.districtId);
     if (i >= 0) state.setView(i);
