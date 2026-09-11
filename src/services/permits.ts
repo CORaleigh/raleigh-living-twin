@@ -1,14 +1,12 @@
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Extent from "@arcgis/core/geometry/Extent";
 import type { DistrictConfig, Permit } from "../types";
+import { mediaForPermit } from "../config/projectMedia";
 
 const PERMITS_URL =
   "https://services.arcgis.com/v400IkDOw1ad7Yad/arcgis/rest/services/Building_Permits/FeatureServer/0";
 
-/**
- * "Active permitting" = the in-progress statuses. Verified against the live
- * service: completed permits use 'Occupancy' / 'Permit Finaled', which we exclude.
- */
+// In-progress statuses only. Completed permits use 'Occupancy'/'Permit Finaled'.
 export const ACTIVE_WHERE =
   "statuscurrentmapped IN ('In Review','Fees/Payment','Application Accepted') AND estprojectcost > 0";
 
@@ -25,7 +23,7 @@ const OUT_FIELDS = [
   "originaladdress1"
 ];
 
-/** Shared layer instance — queries hit the service directly, no map needed. */
+// Queried directly; never added to a map.
 export const permitsLayer = new FeatureLayer({ url: PERMITS_URL, outFields: OUT_FIELDS });
 
 function toPermit(g: __esri.Graphic): Permit {
@@ -49,7 +47,8 @@ function toPermit(g: __esri.Graphic): Permit {
     address: (a.originaladdress1 || "").trim() || "Raleigh",
     narrative,
     lon: geom ? geom.longitude ?? geom.x : NaN,
-    lat: geom ? geom.latitude ?? geom.y : NaN
+    lat: geom ? geom.latitude ?? geom.y : NaN,
+    media: mediaForPermit(name)
   };
 }
 
@@ -58,7 +57,7 @@ function extentOf(d: DistrictConfig): Extent {
   return new Extent({ xmin, ymin, xmax, ymax, spatialReference: { wkid: 4326 } });
 }
 
-/** Top-N most valuable active permits inside a district's extent. */
+// Top-N active permits by cost inside a district extent.
 export async function queryTopPermits(d: DistrictConfig, num = 8): Promise<Permit[]> {
   const q = permitsLayer.createQuery();
   q.where = ACTIVE_WHERE;
@@ -73,7 +72,7 @@ export async function queryTopPermits(d: DistrictConfig, num = 8): Promise<Permi
   return res.features.map(toPermit).filter((p) => p.cost > 0 && !Number.isNaN(p.lon));
 }
 
-/** Count + summed valuation of active permits within a district (aggregate beacon). */
+// Count and summed cost of active permits in a district.
 export async function queryDistrictStats(d: DistrictConfig): Promise<{ n: number; total: number }> {
   const q = permitsLayer.createQuery();
   q.where = ACTIVE_WHERE;
@@ -89,7 +88,7 @@ export async function queryDistrictStats(d: DistrictConfig): Promise<{ n: number
   return { n: Number(a.n) || 0, total: Number(a.v) || 0 };
 }
 
-/** Citywide active totals for the KPI cards. */
+// Citywide active totals for the KPI cards.
 export async function queryCityStats(): Promise<{ n: number; total: number }> {
   const q = permitsLayer.createQuery();
   q.where = ACTIVE_WHERE;

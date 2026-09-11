@@ -10,15 +10,22 @@ export interface Permit {
   narrative: string;
   lon: number;
   lat: number;
+  media?: ProjectMedia; // rendering(s) for the 3D turntable, if we have any
+}
+
+// Curated renderings for a known project, matched onto a live permit.
+export interface ProjectMedia {
+  colorUrl: string;        // the rendering image
+  depthUrl?: string;       // grayscale depth map; enables the relief mesh
+  displacementScale?: number;
+  credit: string;          // required attribution line
 }
 
 export interface DistrictConfig {
   id: string;
   name: string;
-  /** [lon, lat] centroid used for the district camera bookmark + aggregate beacon. */
-  center: [number, number];
-  /** [xmin, ymin, xmax, ymax] in WGS84 — the spatial filter for this district's permits. */
-  extent: [number, number, number, number];
+  center: [number, number]; // [lon, lat]
+  extent: [number, number, number, number]; // [xmin, ymin, xmax, ymax] WGS84
   camera: { zoom: number; tilt: number; heading: number };
 }
 
@@ -28,5 +35,5 @@ export interface DistrictData extends DistrictConfig {
   count: number;
 }
 
-/** "city" = the overview chapter; a number = index into DISTRICTS. */
+// "city" = overview; a number indexes into DISTRICTS.
 export type ViewMode = "city" | number;

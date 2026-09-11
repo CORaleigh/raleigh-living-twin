@@ -8,18 +8,13 @@ export interface SpotlightModel {
   selected: Permit | null;
 }
 
-/**
- * Renders the bottom-right project panel. Three states:
- *  - a permit is selected → full project detail (cost, chips, address, narrative);
- *  - a district is entered, nothing selected → district summary + how to browse;
- *  - the city overview → citywide aggregate.
- * The header (#sptag) and body (#spbody) live in index.html; this fills them.
- */
+// Fills the bottom-right panel (#sptag + #spbody live in index.html) for one of
+// three states: a selected permit, a district with nothing selected, or the city.
 export function renderSpotlight(root: HTMLElement, m: SpotlightModel): void {
   const tag = root.querySelector<HTMLElement>("#sptag")!;
   const body = root.querySelector<HTMLElement>("#spbody")!;
 
-  // --- selected project ---
+  // selected permit
   if (m.view !== "city" && m.selected) {
     const p = m.selected;
     const d = m.districts[m.view];
@@ -41,7 +36,7 @@ export function renderSpotlight(root: HTMLElement, m: SpotlightModel): void {
     return;
   }
 
-  // --- district entered, nothing selected ---
+  // district, nothing selected
   if (m.view !== "city") {
     const d = m.districts[m.view];
     const fc = fmtCost(d.total);
@@ -56,13 +51,13 @@ export function renderSpotlight(root: HTMLElement, m: SpotlightModel): void {
     return;
   }
 
-  // --- city overview ---
+  // city overview
   const total = m.districts.reduce((s, d) => s + d.total, 0);
   const count = m.districts.reduce((s, d) => s + d.count, 0);
   const fc = fmtCost(total);
   tag.textContent = "◈ City overview";
   body.innerHTML =
-    `<div class="sp-name">Raleigh — all chapters</div>` +
+    `<div class="sp-name">Raleigh overview</div>` +
     `<div class="sp-meta">Pick a district above to drop in.</div>` +
     `<div class="sp-stats">` +
       stat("Focus valuation", `$${fc.val}${fc.unit}`, true) +

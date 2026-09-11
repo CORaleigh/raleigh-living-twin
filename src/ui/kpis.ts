@@ -1,6 +1,6 @@
 import { fmtCost } from "../services/permits";
 
-/** Update the citywide KPI cards from live statistics. */
+// Fill the citywide KPI cards from the stats query.
 export function updateKpis(counts: { n: number; total: number }): void {
   const k1 = document.getElementById("k1");
   const k2 = document.getElementById("k2");

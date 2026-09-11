@@ -3,10 +3,8 @@ import { fmtCost } from "../services/permits";
 import { state } from "../state";
 import type { DistrictData, ViewMode } from "../types";
 
-/**
- * The district "chapter" selector. Buttons carry each district's live total once
- * it's known. Clicking dispatches a view change through the store.
- */
+// District tab bar. Each button shows the district total once loaded and
+// dispatches a view change on click.
 export function buildSelector(el: HTMLElement): void {
   el.innerHTML = "";
 
@@ -38,7 +36,7 @@ function highlight(el: HTMLElement, view: ViewMode): void {
   });
 }
 
-/** Fill in the per-district totals once queried. */
+// Fill in per-district totals once queried.
 export function setSelectorTotals(el: HTMLElement, districts: DistrictData[]): void {
   districts.forEach((d) => {
     const span = el.querySelector<HTMLElement>(`[data-tot="${d.id}"]`);

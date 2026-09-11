@@ -2,13 +2,12 @@ import type { ViewMode, Permit } from "./types";
 
 interface AppState {
   view: ViewMode;
-  /** The permit currently spotlighted (district view), or null. */
-  selected: Permit | null;
+  selected: Permit | null; // selected permit in district view
 }
 
 type Listener = (s: AppState) => void;
 
-/** Tiny observable store — no framework, just subscribe/notify. */
+// Minimal observable store: subscribe/notify, no framework.
 class Store {
   private state: AppState = { view: "city", selected: null };
   private listeners = new Set<Listener>();

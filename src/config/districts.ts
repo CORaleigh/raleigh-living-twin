@@ -1,12 +1,8 @@
 import type { DistrictConfig } from "../types";
 
-/**
- * Curated "chapter" districts. Each is a recognizable place (not a council
- * district) with a bounding extent that drives its permit query, and a camera
- * bookmark the SceneView flies to. Extents are approximate WGS84 boxes — refine
- * against a real boundary layer (Council Districts / a custom planning-area
- * polygon) when you want exact spatial filtering.
- */
+// Named areas (not council districts). Each has an extent for the permit query
+// and a camera the view flies to. Extents are approximate WGS84 boxes; swap for
+// real boundary polygons if you need exact spatial filtering.
 export const DISTRICTS: DistrictConfig[] = [
   {
     id: "downtown",
@@ -45,5 +41,5 @@ export const DISTRICTS: DistrictConfig[] = [
   }
 ];
 
-/** The city-overview establishing shot. */
+// Default camera for the city overview.
 export const CITY_CAMERA = { center: [-78.665, 35.83] as [number, number], zoom: 11.4, tilt: 58, heading: 0 };

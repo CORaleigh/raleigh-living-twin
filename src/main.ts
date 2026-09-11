@@ -8,8 +8,10 @@ import { queryTopPermits, queryDistrictStats, queryCityStats } from "./services/
 import { buildSelector, setSelectorTotals } from "./ui/selector";
 import { renderSpotlight } from "./ui/spotlight";
 import { updateKpis } from "./ui/kpis";
+import { demoPermitsFor } from "./config/projectMedia";
+import { Turntable } from "./three/turntable";
 import { state } from "./state";
-import type { DistrictData } from "./types";
+import type { DistrictData, Permit } from "./types";
 
 const apiKey = import.meta.env.VITE_ARCGIS_API_KEY as string | undefined;
 if (apiKey) esriConfig.apiKey = apiKey;
@@ -18,21 +20,49 @@ const { view, beaconLayer } = createTwin("viewDiv", Boolean(apiKey));
 const orbit = new Orbit(view);
 const selectorEl = document.getElementById("selector")!;
 const spotEl = document.getElementById("spot")!;
+const projViewEl = document.getElementById("projView")!;
 
 function idIndex(id: string): number {
   return DISTRICTS.findIndex((d) => d.id === id);
 }
 
-// Working copy of the districts with permits/totals filled in as we learn them.
+// 3D turntable of the selected project's rendering, shown in the spotlight panel.
+let turntable: Turntable | null = null;
+let shownMediaId: number | null = null;
+
+function updateProjectViewer(selected: Permit | null): void {
+  const id = selected?.media ? selected.objectId : null;
+  if (id === shownMediaId) return;
+  shownMediaId = id;
+  turntable?.dispose();
+  turntable = null;
+  projViewEl.innerHTML = "";
+  if (!selected?.media) {
+    projViewEl.hidden = true;
+    return;
+  }
+  projViewEl.hidden = false;
+  const canvas = document.createElement("div");
+  canvas.className = "pv-canvas";
+  const credit = document.createElement("div");
+  credit.className = "pv-credit";
+  credit.textContent = selected.media.credit;
+  projViewEl.append(canvas, credit);
+  turntable = new Turntable(canvas, selected.media);
+}
+
+// Local copy of districts, filled with permits/totals as they load.
 const districts: DistrictData[] = DISTRICTS.map((d) => ({ ...d, permits: [], total: 0, count: 0 }));
 let lastView: string = "";
-let lastSelected: number | null = null; // objectId of the last focused permit
-let ready = false; // becomes true once the SceneView is usable (guards applyView)
+let lastSelected: number | null = null;
+let ready = false; // true once the SceneView is ready
 
 async function ensurePermits(i: number): Promise<void> {
   const d = districts[i];
   if (d.permits.length) return;
-  d.permits = await queryTopPermits(DISTRICTS[i], 8);
+  const live = await queryTopPermits(DISTRICTS[i], 8);
+  const demos = demoPermitsFor(DISTRICTS[i].id);
+  d.permits = [...demos, ...live].sort((a, b) => b.cost - a.cost);
   if (!d.count) {
     d.count = d.permits.length;
     d.total = d.permits.reduce((s, p) => s + p.cost, 0);
@@ -40,7 +70,7 @@ async function ensurePermits(i: number): Promise<void> {
 }
 
 async function flyTo(target: __esri.GoToTarget3D): Promise<void> {
-  orbit.stop(); // don't let the orbit cancel the fly-to mid-flight
+  orbit.stop(); // otherwise the orbit cancels the goTo
   await view.goTo(target, { animate: true, duration: 1500, easing: "out-cubic" }).catch(() => {});
 }
 
@@ -69,9 +99,8 @@ async function applyView(): Promise<void> {
     if (playing) orbit.start(); // resume orbiting the new pivot
   }
 
-  // Selecting a permit re-pivots the orbit onto that project and closes in;
-  // deselecting pulls back out to the district framing. Skipped right after a
-  // view change (that flight already framed things).
+  // Selecting a permit pivots the orbit onto it; deselecting pulls back to the
+  // district. Skipped right after a view change since that flight already framed it.
   const selId = s.selected?.objectId ?? null;
   if (!viewChanged && selId !== lastSelected && s.view !== "city") {
     const i = s.view;
@@ -86,24 +115,22 @@ async function applyView(): Promise<void> {
       orbit.setCenter(DISTRICTS[i].center);
       await flyTo({ center: DISTRICTS[i].center, zoom: c.zoom, tilt: c.tilt });
     }
-    if (playing) orbit.start(); // resume orbiting the new pivot
+    if (playing) orbit.start();
   }
   lastSelected = selId;
 
-  // Bottom-right project panel reflects the current view / selection.
   renderSpotlight(spotEl, { view: s.view, districts, selected: s.selected });
+  updateProjectViewer(s.selected);
 }
 
-// Re-render whenever view or selection changes.
 state.subscribe(() => void applyView());
 
-// ---- click-to-drill: district beacon → enter district; permit beacon → select ----
+// Click a beacon to enter a district or select a permit; clicks elsewhere are
+// ignored (navigation is via the selector and prev/next buttons).
 view.on("click", async (event) => {
   const hit = await view.hitTest(event, { include: [beaconLayer] });
   const g = hit.results.find((r) => "graphic" in r) as __esri.GraphicHit | undefined;
   const attr = g?.graphic?.attributes;
-  // Clicking anywhere that isn't a beacon does nothing — no zoom-out, no
-  // deselect. Navigation is driven by the selector and the ‹ › buttons.
   if (!attr) return;
   if (attr.kind === "district") {
     const i = idIndex(attr.districtId);
@@ -117,7 +144,7 @@ view.on("click", async (event) => {
   }
 });
 
-// ---- spotlight prev/next cycles permits within the current district ----
+// prev/next cycle through the current district's permits
 function cycle(delta: number): void {
   const s = state.get();
   if (s.view === "city") return;
@@ -130,7 +157,7 @@ function cycle(delta: number): void {
 document.getElementById("next")!.addEventListener("click", () => cycle(1));
 document.getElementById("prev")!.addEventListener("click", () => cycle(-1));
 
-// ---- play / pause orbit ----
+// play / pause the orbit
 let playing = true;
 const playBtn = document.getElementById("playbtn")!;
 playBtn.addEventListener("click", () => {
@@ -140,13 +167,12 @@ playBtn.addEventListener("click", () => {
   playBtn.querySelector("#playlabel")!.textContent = playing ? "Pause orbit" : "Resume orbit";
 });
 
-// ---- boot ----
 buildSelector(selectorEl);
 
 view.when(async () => {
   ready = true;
 
-  // Preload district totals so the selector + city aggregate beacons are ready.
+  // Preload district totals for the selector and aggregate beacons.
   const stats = await Promise.all(DISTRICTS.map((d) => queryDistrictStats(d).catch(() => ({ n: 0, total: 0 }))));
   stats.forEach((s, i) => {
     districts[i].count = s.n;
@@ -154,14 +180,13 @@ view.when(async () => {
   });
   setSelectorTotals(selectorEl, districts);
 
-  // Default chapter: drop straight into Downtown (index 0) and orbit it.
+  // Start in Downtown.
   state.setView(0);
 
-  // Citywide KPI cards.
   queryCityStats().then(updateKpis).catch((e) => console.info("City stats unavailable:", e?.message));
 });
 
-// Update the small heading + view readout each frame is overkill; watch the camera instead.
+// Watch the camera instead of updating the heading readout every frame.
 view.watch("camera", (cam: __esri.Camera) => {
   const hdg = document.getElementById("hdg");
   if (hdg && cam) hdg.textContent = String(Math.round(cam.heading)).padStart(3, "0") + "°";

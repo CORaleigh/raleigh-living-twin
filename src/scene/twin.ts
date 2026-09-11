@@ -16,16 +16,11 @@ export interface Twin {
   beaconLayer: GraphicsLayer;
 }
 
-/**
- * Keyless Esri dark basemap using the World Dark Gray Base tile service (free,
- * no API key). Matches the control-room palette and gives street context under
- * the 3D buildings. If an Esri API key is present we prefer Esri's
- * "dark-gray-3d" instead.
- */
+// Keyless dark basemap (World Dark Gray Base tiles). Used when no API key is
+// set; with a key we use Esri's "dark-gray-3d" basemap instead.
 function esriDarkBasemap(): Basemap {
-  // The keyless World Dark Gray Base is only cached to ~zoom 16. Cap the LODs so
-  // ArcGIS overzooms (upsamples the deepest available tile) when we fly into a
-  // district, instead of requesting missing tiles and drawing nothing.
+  // These tiles are only cached to ~zoom 16, so cap the LODs and let ArcGIS
+  // overzoom rather than request tiles that don't exist.
   const tileInfo = TileInfo.create({ size: 256 });
   tileInfo.lods = tileInfo.lods.filter((lod) => lod.level <= 16);
   return new Basemap({
@@ -53,10 +48,9 @@ export function createTwin(container: string, hasApiKey: boolean): Twin {
   });
 
   const map = new Map({
-    // Always use world elevation so the buildings/trees SceneLayers (which carry
-    // real-world elevation) sit correctly on the terrain and the ground-relative
-    // beacons start at the right height. An API key only upgrades the basemap.
     basemap: hasApiKey ? "dark-gray-3d" : esriDarkBasemap(),
+    // world-elevation keeps the SceneLayers on the terrain and ground-relative
+    // beacons at the right height.
     ground: "world-elevation",
     layers: [buildings, trees, beaconLayer]
   });
@@ -69,22 +63,17 @@ export function createTwin(container: string, hasApiKey: boolean): Twin {
       background: { type: "color", color: [7, 11, 22, 1] },
       starsEnabled: true,
       atmosphereEnabled: true,
-      // Low evening sun (fixed, not camera-tracked) throws long directional
-      // shadows and warm rim-light across the massing — far more dramatic than
-      // flat "virtual" lighting. Tune the drama by moving the time of day: a
-      // later UTC time = lower sun = longer shadows.
+      // Fixed low evening sun for long shadows. A later UTC time = lower sun.
       lighting: {
         type: "sun",
-        date: new Date("2026-03-15T22:15:00Z"), // ≈ 6:15pm over Raleigh — golden, raking light
+        date: new Date("2026-03-15T22:15:00Z"), // ~6:15pm local
         directShadowsEnabled: true,
         cameraTrackingEnabled: false
       } as __esri.SunLighting,
-      // Thin haze so distant districts fall back and the foreground reads.
       weather: { type: "foggy", fogStrength: 0.05 } as __esri.FoggyWeather
     },
     ui: { components: ["attribution"] },
-    // No popups: clicking a building or tree must not select/highlight it. All
-    // click interaction is handled by our own beacon hit-test in main.ts.
+    // Off so clicking buildings/trees can't select them; clicks handled in main.ts.
     popupEnabled: false,
     camera: { position: { longitude: -78.665, latitude: 35.79, z: 6000 }, tilt: 58, heading: 0 }
   });
