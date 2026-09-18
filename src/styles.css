@@ -106,9 +106,13 @@ h1 .accent { color: var(--amber-hi); }
 .sp-nav { display: flex; gap: 6px; }
 .sp-nav button { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--stroke); background: transparent; color: var(--ink-mut); cursor: pointer; font-size: 15px; line-height: 1; }
 .sp-nav button:hover { color: #fff; border-color: var(--stroke-strong); }
-.sp-view { margin-bottom: 11px; border: 1px solid var(--stroke); border-radius: 10px; overflow: hidden; background: radial-gradient(120% 100% at 50% 20%, rgba(40, 52, 78, 0.6), rgba(8, 13, 26, 0.9)); }
+.sp-view { position: relative; margin-bottom: 11px; border: 1px solid var(--stroke); border-radius: 10px; overflow: hidden; background: radial-gradient(120% 100% at 50% 20%, rgba(40, 52, 78, 0.6), rgba(8, 13, 26, 0.9)); }
+/* DEMO watermark over the turntable */
+.sp-view::before { content: "DEMO"; position: absolute; top: 0; left: 0; right: 0; height: 200px; z-index: 2; display: flex; align-items: center; justify-content: center; font-family: "Chakra Petch", sans-serif; font-weight: 700; font-size: 54px; letter-spacing: 0.14em; color: rgba(231, 238, 248, 0.10); transform: rotate(-16deg); pointer-events: none; user-select: none; }
 .pv-canvas { width: 100%; height: 200px; touch-action: none; }
 .pv-canvas canvas { display: block; }
+.pv-canvas.pv-empty { display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 16px; font-size: 11.5px; color: var(--ink-dim); }
+.pv-fallback { display: block; width: 100%; height: 200px; object-fit: cover; }
 .pv-credit { font-family: "IBM Plex Mono", monospace; font-size: 9px; letter-spacing: 0.04em; color: var(--ink-dim); padding: 5px 8px 6px; border-top: 1px solid var(--stroke); }
 .sp-body { transition: opacity 0.3s; }
 .sp-rank { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--ink-dim); }

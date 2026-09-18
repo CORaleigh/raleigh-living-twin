@@ -15,8 +15,9 @@ export interface Permit {
 
 // Curated renderings for a known project, matched onto a live permit.
 export interface ProjectMedia {
-  colorUrl: string;        // the rendering image
+  colorUrl: string;        // the rendering image (fallback + relief/slab texture)
   depthUrl?: string;       // grayscale depth map; enables the relief mesh
+  modelUrl?: string;       // GLB model; takes priority over the image when present
   displacementScale?: number;
   credit: string;          // required attribution line
 }

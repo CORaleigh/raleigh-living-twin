@@ -48,7 +48,26 @@ function updateProjectViewer(selected: Permit | null): void {
   credit.className = "pv-credit";
   credit.textContent = selected.media.credit;
   projViewEl.append(canvas, credit);
-  turntable = new Turntable(canvas, selected.media);
+  const media = selected.media;
+  // If the model/image can't load (e.g. not bundled in this build), show a note.
+  const showPlaceholder = () => {
+    canvas.classList.add("pv-empty");
+    canvas.textContent = "3D rendering available in the internal build";
+  };
+  try {
+    turntable = new Turntable(canvas, media, showPlaceholder);
+  } catch (err) {
+    // WebGL/turntable failed to start: fall back to the flat rendering so the
+    // user still sees something, and surface the reason in the console.
+    console.error("Turntable failed to initialize:", err);
+    canvas.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = media.colorUrl;
+    img.alt = "";
+    img.className = "pv-fallback";
+    img.onerror = showPlaceholder;
+    canvas.appendChild(img);
+  }
 }
 
 // Local copy of districts, filled with permits/totals as they load.

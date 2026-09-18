@@ -38,6 +38,7 @@ const KNOWN: KnownProject[] = [
     media: {
       colorUrl: asset("projects/400h/color.jpg"),
       depthUrl: asset("projects/400h/depth.png"),
+      modelUrl: asset("projects/400h/model.glb"),
       displacementScale: 0.2,
       credit: "Rendering: 400H — 400hraleigh.com"
     },

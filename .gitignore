@@ -12,8 +12,9 @@ dist-ssr
 .env.*
 !.env.example
 
-# Licensed third-party project renderings - internal demo only, never publish
+# Licensed third-party renderings - keep images internal (not published)
 /public/projects/**/*.jpg
 /public/projects/**/*.jpeg
 /public/projects/**/*.png
 /public/projects/**/*.webp
+# GLB models ARE published (the demo turntable experience on GitHub Pages)
