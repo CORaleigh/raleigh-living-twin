@@ -12,17 +12,6 @@ const AMBER_HI: [number, number, number] = [255, 214, 148];
 
 const WGS84 = { wkid: 4326 };
 
-// Anchor for one beacon: where the beam/dot is drawn and what it represents.
-export interface BeaconAnchor {
-  lon: number;
-  lat: number;
-  height: number; // tip height in meters (matches the beam)
-  kind: "district" | "permit";
-  hero: boolean; // largest beacon in the current set
-  permit?: Permit;
-  district?: DistrictData;
-}
-
 function verticalLine(lon: number, lat: number, heightMeters: number, width: number): Graphic {
   const line = new Polyline({
     hasZ: true,
@@ -62,38 +51,28 @@ function tipDot(lon: number, lat: number, heightMeters: number, sizePx: number, 
 }
 
 // One beacon per permit; height scales with cost across the set.
-export function renderPermitBeacons(layer: GraphicsLayer, permits: Permit[]): BeaconAnchor[] {
+export function renderPermitBeacons(layer: GraphicsLayer, permits: Permit[]): void {
   layer.removeAll();
-  if (!permits.length) return [];
+  if (!permits.length) return;
   const max = Math.max(...permits.map((p) => p.cost));
   const min = Math.min(...permits.map((p) => p.cost));
-  const anchors: BeaconAnchor[] = [];
   permits.forEach((p, i) => {
     const norm = (p.cost - min) / Math.max(1, max - min);
     const h = 130 + norm * 400; // meters
     const isHero = i === 0; // permits arrive sorted by cost desc
     layer.add(verticalLine(p.lon, p.lat, h, isHero ? 6 : 3.5));
     layer.add(tipDot(p.lon, p.lat, h, isHero ? 22 : 14, { kind: "permit", objectId: p.objectId }));
-    anchors.push({ lon: p.lon, lat: p.lat, height: h, kind: "permit", hero: isHero, permit: p });
   });
-  return anchors;
 }
 
 // One aggregate beacon per district; height scales with total valuation.
-export function renderDistrictBeacons(layer: GraphicsLayer, districts: DistrictData[]): BeaconAnchor[] {
+export function renderDistrictBeacons(layer: GraphicsLayer, districts: DistrictData[]): void {
   layer.removeAll();
   const maxTotal = Math.max(1, ...districts.map((d) => d.total));
-  const anchors: BeaconAnchor[] = [];
   districts.forEach((d) => {
     const [lon, lat] = d.center;
     const h = 200 + (d.total / maxTotal) * 900; // meters
     layer.add(verticalLine(lon, lat, h, 7));
     layer.add(tipDot(lon, lat, h, 24, { kind: "district", districtId: d.id }));
-    anchors.push({ lon, lat, height: h, kind: "district", hero: d.total === maxTotal, district: d });
   });
-  return anchors;
-}
-
-export function clearBeacons(layer: GraphicsLayer): void {
-  layer.removeAll();
 }

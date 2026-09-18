@@ -1,5 +1,6 @@
 import { DISTRICTS } from "../config/districts";
 import { fmtCost } from "../services/permits";
+import { esc } from "../dom";
 import type { DistrictData, Permit, ViewMode } from "../types";
 
 export interface SpotlightModel {
@@ -22,17 +23,17 @@ export function renderSpotlight(root: HTMLElement, m: SpotlightModel): void {
     const fc = fmtCost(p.cost);
     tag.textContent = "◈ Active project";
     body.innerHTML =
-      (rank >= 0 ? `<div class="sp-rank">#${rank + 1} of ${d.permits.length} · ${d.name}</div>` : "") +
-      `<div class="sp-name">${p.name}</div>` +
-      `<div class="sp-meta">${p.address || "Address unavailable"}</div>` +
-      `<div class="sp-chips"><span class="chip hot">${p.type}</span><span class="chip">${p.status}</span></div>` +
-      (p.narrative ? `<div class="sp-nar">${p.narrative}</div>` : "") +
+      (rank >= 0 ? `<div class="sp-rank">#${rank + 1} of ${d.permits.length} · ${esc(d.name)}</div>` : "") +
+      `<div class="sp-name">${esc(p.name)}</div>` +
+      `<div class="sp-meta">${esc(p.address) || "Address unavailable"}</div>` +
+      `<div class="sp-chips"><span class="chip hot">${esc(p.type)}</span><span class="chip">${esc(p.status)}</span></div>` +
+      (p.narrative ? `<div class="sp-nar">${esc(p.narrative)}</div>` : "") +
       `<div class="sp-stats">` +
         stat("Est. cost", `$${fc.val}${fc.unit}`, true) +
         (p.units != null ? stat("Units", String(p.units)) : "") +
         (p.floors != null ? stat("Floors", String(p.floors)) : "") +
       `</div>` +
-      `<div class="sp-status"><span class="dot"></span>${p.status}</div>`;
+      `<div class="sp-status"><span class="dot"></span>${esc(p.status)}</div>`;
     return;
   }
 
@@ -42,7 +43,7 @@ export function renderSpotlight(root: HTMLElement, m: SpotlightModel): void {
     const fc = fmtCost(d.total);
     tag.textContent = "◈ District";
     body.innerHTML =
-      `<div class="sp-name">${d.name}</div>` +
+      `<div class="sp-name">${esc(d.name)}</div>` +
       `<div class="sp-meta">Click a beacon or use ‹ › to browse projects.</div>` +
       `<div class="sp-stats">` +
         stat("Active valuation", `$${fc.val}${fc.unit}`, true) +

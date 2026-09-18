@@ -1,5 +1,6 @@
 import { DISTRICTS } from "../config/districts";
 import { fmtCost } from "../services/permits";
+import { esc } from "../dom";
 import { state } from "../state";
 import type { DistrictData, ViewMode } from "../types";
 
@@ -13,7 +14,7 @@ export function buildSelector(el: HTMLElement): void {
     b.className = "seg";
     b.dataset.mode = String(i);
     b.innerHTML =
-      `<span class="seg-name">${d.name}</span>` +
+      `<span class="seg-name">${esc(d.name)}</span>` +
       `<span class="seg-tot" data-tot="${d.id}">—</span>`;
     el.appendChild(b);
   });

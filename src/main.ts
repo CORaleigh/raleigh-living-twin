@@ -10,6 +10,7 @@ import { renderSpotlight } from "./ui/spotlight";
 import { updateKpis } from "./ui/kpis";
 import { demoPermitsFor } from "./config/projectMedia";
 import { Turntable } from "./three/turntable";
+import { els } from "./dom";
 import { state } from "./state";
 import type { DistrictData, Permit } from "./types";
 
@@ -18,9 +19,6 @@ if (apiKey) esriConfig.apiKey = apiKey;
 
 const { view, beaconLayer } = createTwin("viewDiv", Boolean(apiKey));
 const orbit = new Orbit(view);
-const selectorEl = document.getElementById("selector")!;
-const spotEl = document.getElementById("spot")!;
-const projViewEl = document.getElementById("projView")!;
 
 function idIndex(id: string): number {
   return DISTRICTS.findIndex((d) => d.id === id);
@@ -36,18 +34,18 @@ function updateProjectViewer(selected: Permit | null): void {
   shownMediaId = id;
   turntable?.dispose();
   turntable = null;
-  projViewEl.innerHTML = "";
+  els.projView.innerHTML = "";
   if (!selected?.media) {
-    projViewEl.hidden = true;
+    els.projView.hidden = true;
     return;
   }
-  projViewEl.hidden = false;
+  els.projView.hidden = false;
   const canvas = document.createElement("div");
   canvas.className = "pv-canvas";
   const credit = document.createElement("div");
   credit.className = "pv-credit";
   credit.textContent = selected.media.credit;
-  projViewEl.append(canvas, credit);
+  els.projView.append(canvas, credit);
   const media = selected.media;
   // If the model/image can't load (e.g. not bundled in this build), show a note.
   const showPlaceholder = () => {
@@ -138,7 +136,7 @@ async function applyView(): Promise<void> {
   }
   lastSelected = selId;
 
-  renderSpotlight(spotEl, { view: s.view, districts, selected: s.selected });
+  renderSpotlight(els.spotlight, { view: s.view, districts, selected: s.selected });
   updateProjectViewer(s.selected);
 }
 
@@ -173,20 +171,19 @@ function cycle(delta: number): void {
   const next = (cur + delta + list.length) % list.length;
   state.select(list[next]);
 }
-document.getElementById("next")!.addEventListener("click", () => cycle(1));
-document.getElementById("prev")!.addEventListener("click", () => cycle(-1));
+els.next.addEventListener("click", () => cycle(1));
+els.prev.addEventListener("click", () => cycle(-1));
 
 // play / pause the orbit
 let playing = true;
-const playBtn = document.getElementById("playbtn")!;
-playBtn.addEventListener("click", () => {
+els.playBtn.addEventListener("click", () => {
   playing = !playing;
   if (playing) orbit.start();
   else orbit.stop();
-  playBtn.querySelector("#playlabel")!.textContent = playing ? "Pause orbit" : "Resume orbit";
+  els.playLabel.textContent = playing ? "Pause orbit" : "Resume orbit";
 });
 
-buildSelector(selectorEl);
+buildSelector(els.selector);
 
 view.when(async () => {
   ready = true;
@@ -197,7 +194,7 @@ view.when(async () => {
     districts[i].count = s.n;
     districts[i].total = s.total;
   });
-  setSelectorTotals(selectorEl, districts);
+  setSelectorTotals(els.selector, districts);
 
   // Start in Downtown.
   state.setView(0);
@@ -207,10 +204,8 @@ view.when(async () => {
 
 // Watch the camera instead of updating the heading readout every frame.
 view.watch("camera", (cam: __esri.Camera) => {
-  const hdg = document.getElementById("hdg");
-  if (hdg && cam) hdg.textContent = String(Math.round(cam.heading)).padStart(3, "0") + "°";
+  if (cam) els.heading.textContent = String(Math.round(cam.heading)).padStart(3, "0") + "°";
 });
 state.subscribe((s) => {
-  const v = document.getElementById("vlabel");
-  if (v) v.textContent = s.view === "city" ? "City" : DISTRICTS[s.view].name;
+  els.viewLabel.textContent = s.view === "city" ? "City" : DISTRICTS[s.view].name;
 });

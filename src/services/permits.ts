@@ -72,12 +72,14 @@ export async function queryTopPermits(d: DistrictConfig, num = 8): Promise<Permi
   return res.features.map(toPermit).filter((p) => p.cost > 0 && !Number.isNaN(p.lon));
 }
 
-// Count and summed cost of active permits in a district.
-export async function queryDistrictStats(d: DistrictConfig): Promise<{ n: number; total: number }> {
+// Count + summed cost of active permits, optionally within a geometry.
+async function queryStats(geometry?: __esri.Geometry): Promise<{ n: number; total: number }> {
   const q = permitsLayer.createQuery();
   q.where = ACTIVE_WHERE;
-  q.geometry = extentOf(d);
-  q.spatialRelationship = "intersects";
+  if (geometry) {
+    q.geometry = geometry;
+    q.spatialRelationship = "intersects";
+  }
   q.outStatistics = [
     { statisticType: "count", onStatisticField: "OBJECTID", outStatisticFieldName: "n" },
     { statisticType: "sum", onStatisticField: "estprojectcost", outStatisticFieldName: "v" }
@@ -88,19 +90,11 @@ export async function queryDistrictStats(d: DistrictConfig): Promise<{ n: number
   return { n: Number(a.n) || 0, total: Number(a.v) || 0 };
 }
 
+// Count and summed cost of active permits in a district.
+export const queryDistrictStats = (d: DistrictConfig) => queryStats(extentOf(d));
+
 // Citywide active totals for the KPI cards.
-export async function queryCityStats(): Promise<{ n: number; total: number }> {
-  const q = permitsLayer.createQuery();
-  q.where = ACTIVE_WHERE;
-  q.outStatistics = [
-    { statisticType: "count", onStatisticField: "OBJECTID", outStatisticFieldName: "n" },
-    { statisticType: "sum", onStatisticField: "estprojectcost", outStatisticFieldName: "v" }
-  ] as __esri.StatisticDefinitionProperties[];
-  q.returnGeometry = false;
-  const res = await permitsLayer.queryFeatures(q);
-  const a = res.features[0]?.attributes ?? {};
-  return { n: Number(a.n) || 0, total: Number(a.v) || 0 };
-}
+export const queryCityStats = () => queryStats();
 
 export function fmtCost(v: number): { val: string; unit: string } {
   if (v >= 1e9) return { val: (v / 1e9).toFixed(2), unit: "B" };
